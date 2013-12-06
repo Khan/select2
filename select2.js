@@ -1,3 +1,9 @@
+/* Modified by Leah for use in coach reports
+ * Added function removeSpecialChars, which removes <>"` characters from strings
+ * Used in multi-select boxes to avoid XSS attacks in coach reports and allow
+ * people to type terms in quotation marks
+ */
+
 /*
 Copyright 2012 Igor Vaynberg
 
@@ -104,6 +110,12 @@ the specific language governing permissions and limitations under the Apache Lic
 
     nextUid=(function() { var counter=1; return function() { return counter++; }; }());
 
+    function removeSpecialChars(text) {
+        if (typeof(text)!='string') {
+            return text;
+        }
+        return text.replace(/[<>"`]/g, function(chr) { return ''; });
+    }
 
     function stripDiacritics(str) {
         var ret, i, l, c;
@@ -359,6 +371,8 @@ the specific language governing permissions and limitations under the Apache Lic
 
 
     function markMatch(text, term, markup, escapeMarkup) {
+        term = removeSpecialChars(term);
+        text = removeSpecialChars(text);
         var match=stripDiacritics(text.toUpperCase()).indexOf(stripDiacritics(term.toUpperCase())),
             tl=term.length;
 
@@ -2285,6 +2299,8 @@ the specific language governing permissions and limitations under the Apache Lic
 
             container.empty();
             if (data !== null) {
+                data.id = removeSpecialChars(data.id);
+                data.text = removeSpecialChars(data.text);
                 formatted=this.opts.formatSelection(data, container, this.opts.escapeMarkup);
             }
             if (formatted !== undefined) {
@@ -2996,15 +3012,20 @@ the specific language governing permissions and limitations under the Apache Lic
             var val;
             if (this.select) {
                 val = this.select.val();
+                val = removeSpecialChars(val);
                 return val === null ? [] : val;
             } else {
                 val = this.opts.element.val();
+                val = removeSpecialChars(val);
                 return splitVal(val, this.opts.separator);
             }
         },
 
         // multi
         setVal: function (val) {
+            $.each(val, function(i, v) {
+                val[i] = removeSpecialChars(v);
+            });
             var unique;
             if (this.select) {
                 this.select.val(val);
